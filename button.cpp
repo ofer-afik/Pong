@@ -27,5 +27,5 @@ bool Button::isPressed()
 void Button::Draw()
 {
     DrawRectangleRounded(butRect, 0.25, 6, bgColor);
-    DrawText(label.c_str(), butRect.x + 30, butRect.y + 40, 100, textColor);
+    DrawText(label.c_str(), butRect.x + 30, butRect.y + 20, 100, textColor);
 }

@@ -56,7 +56,8 @@ class Ball
 
         void Draw()
         {
-            DrawCircle(pos.x, pos.y, radius, yellow);
+            Color color = (abs(speed.x) == 30) ? RED : yellow;
+            DrawCircle(pos.x, pos.y, radius, color);
         }
 
         void Update()
@@ -74,12 +75,18 @@ class Ball
             if (pos.x + radius  >= screen_width)
             {
                 cpuScore++;
+                BeginDrawing();
+                    DrawRectangle(0, 0, screen_width, screen_height, Color{0, 255, 0, 100});
+                EndDrawing();
                 Reset();
             }
 
             if (pos.x - radius <= 0)
             {
                 playerScore++;
+                BeginDrawing();
+                    DrawRectangle(0, 0, screen_width, screen_height, Color{255, 0, 0, 100});
+                EndDrawing();
                 Reset();
             }
         }
@@ -153,21 +160,6 @@ void Reset()
     ai.pos.y = (screen_height - ai.size.y) / 2;
     player.pos.y = (screen_height - player.size.y) / 2;
 
-    BeginDrawing();
-        // Background
-        ClearBackground(green);
-        DrawRectangle(0, 0, screen_width / 2, screen_height, darkGreen);
-        DrawCircle(screen_width / 2, screen_height / 2, 150, lightGreen);
-        DrawLine(screen_width / 2, 0, screen_width / 2, screen_height, Color{255, 255, 255, 255});
-
-        ball.Draw();
-        ai.Draw();
-        player.Draw();
-
-        DrawText(TextFormat("%i", playerScore), 1000, 50, 100, Color{255, 255, 255, 255});
-        DrawText(TextFormat("%i", cpuScore), 100, 50, 100, Color{255, 255, 255, 255});
-    EndDrawing();
-
     std::this_thread::sleep_for(std::chrono::seconds(1));
 }
 
@@ -191,7 +183,7 @@ int main()
     PlayMusicStream(bgmusic);
     std::thread musicThread(playMusic, bgmusic);
 
-    Button playBut = Button(500, 400, 300, 200, "Play", Color{255, 255, 255, 255}, green);
+    Button playBut = Button(500, 400, 300, 140, "Play", Color{10, 100, 80, 255}, darkGreen);
 
     // Main Menu
     while (true)
@@ -203,6 +195,7 @@ int main()
         }
         BeginDrawing();
             ClearBackground(green);
+            DrawRectangle(0, 0, screen_width / 2, screen_height, darkGreen);
             DrawText("Pong", 400, 150, 200, Color{255, 255, 255, 255});
             playBut.Draw();
             if (playBut.isPressed())
@@ -219,6 +212,7 @@ int main()
     {
         BeginDrawing();
             ClearBackground(green);
+            DrawRectangle(0, 0, screen_width / 2, screen_height, darkGreen);
             DrawText("How to Play", 125, 75, 150, yellow);
             DrawText("Move with arrows", 200, 300, 50, BLACK);
             DrawText("Try to hit the ball to the other side", 200, 375, 50, BLACK);
@@ -230,6 +224,7 @@ int main()
         if (WindowShouldClose())
         {
             CloseWindow();
+            return 0;
         }
         if (IsKeyPressed(KEY_SPACE))
         {
@@ -252,8 +247,13 @@ int main()
     ai.pos = Vector2{screen_width - ai.size.x - 10, (screen_height - player.size.y) / 2};
     ai.speed = 15;
 
-    while (!WindowShouldClose())
+    while (true)
     {
+        if (WindowShouldClose())
+        {
+            CloseWindow();
+            return 0;
+        }
         BeginDrawing();
             // Background
             ClearBackground(green);
@@ -265,7 +265,7 @@ int main()
             ball.Update();
             player.Update();
             ai.Update(ball.pos.y);
-            if (CheckCollisionCircleRec(ball.pos, ball.radius, Rectangle{player.pos.x, player.pos.y, player.size.x, player.size.y}))
+            if (CheckCollisionCircleRec(ball.pos, ball.radius, Rectangle{player.pos.x, player.pos.y + 5, player.size.x, player.size.y - 10}))
             {
                 PlaySound(ball_sfx);
                 ball.speed.x *= -1;
@@ -276,7 +276,7 @@ int main()
                 }
             }
 
-            if (CheckCollisionCircleRec(ball.pos, ball.radius, Rectangle{ai.pos.x, ai.pos.y, ai.size.x, ai.size.y}))
+            if (CheckCollisionCircleRec(ball.pos, ball.radius, Rectangle{ai.pos.x, ai.pos.y + 5, ai.size.x, ai.size.y - 10}))
             {
                 PlaySound(ball_sfx);
                 if (abs(ball.speed.x) == 30)
@@ -295,8 +295,19 @@ int main()
             DrawText(TextFormat("%i", playerScore), 1000, 50, 100, Color{255, 255, 255, 255});
             DrawText(TextFormat("%i", cpuScore), 100, 50, 100, Color{255, 255, 255, 255});
 
+            // Winning
+            if (playerScore == 5 || cpuScore == 5)
+            {
+                BeginDrawing();
+                    ClearBackground(lightGreen);
+                    DrawText("Game End", 200, 400, 300, darkGreen);
+                EndDrawing();
+
+                while (!WindowShouldClose()) {;}
+                CloseWindow();
+                return 0;
+            }
         EndDrawing();
-        UpdateMusicStream(bgmusic);
     }
 
     CloseWindow();
