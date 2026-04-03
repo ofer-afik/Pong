@@ -1,0 +1,85 @@
+name: Cross-Platform Build
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # --- 1. INSTALL DEPENDENCIES ---
+
+      - name: Install Deps (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libx11-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev libxkbcommon-dev libgl1-mesa-dev
+
+      - name: Install raylib (MacOS)
+        if: matrix.os == 'macos-latest'
+        run: brew install raylib
+
+      - name: Install raylib (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          vcpkg install raylib:x64-windows
+          # We force vcpkg to integrate so the system can find it more easily
+          vcpkg integrate install
+
+      # --- 2. BUILD RAYLIB FROM SOURCE (LINUX ONLY) ---
+      # Ubuntu's apt version of raylib is often outdated or missing, so source is safer.
+      - name: Build raylib (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          git clone --depth 1 https://github.com/raysan5/raylib.git
+          cd raylib/src
+          make PLATFORM=PLATFORM_DESKTOP
+          sudo make install
+
+      # --- 3. COMPILATION ---
+
+      - name: Build Project (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          $VCPKG_PATH = "C:\vcpkg\installed\x64-windows"
+          g++ main.cpp button.cpp -o game.exe `
+          -I"$VCPKG_PATH\include" `
+          -L"$VCPKG_PATH\lib" `
+          -lraylib -lgdi32 -lwinmm -luser32 -lshell32
+
+      - name: Build Project (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          g++ main.cpp button.cpp -o game \
+          -lraylib -lGL -lm -lpthread -ldl -lrt -lX11
+
+      - name: Build Project (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          # Brew installs to /usr/local or /opt/homebrew
+          g++ main.cpp button.cpp -o game \
+          -I/usr/local/include -L/usr/local/lib \
+          -I/opt/homebrew/include -L/opt/homebrew/lib \
+          -lraylib -framework IOKit -framework Cocoa -framework OpenGL
+
+      # --- 4. ARTIFACTS ---
+
+      - name: Upload Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ matrix.os }}
+          path: |
+            game
+            game.exe
