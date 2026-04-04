@@ -34,8 +34,8 @@ jobs:
       - name: Install raylib (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          # We use x64-windows-static so the DLLs are built into the EXE
-          vcpkg install raylib:x64-windows-static
+          # We use x64-mingw-static so the library is compatible with g++
+          vcpkg install raylib:x64-mingw-static
 
       # --- 2. BUILD RAYLIB FROM SOURCE (LINUX ONLY) ---
       
@@ -52,11 +52,11 @@ jobs:
       - name: Build Project (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          $VCPKG_PATH = "C:\vcpkg\installed\x64-windows-static"
+          $VCPKG_PATH = "C:\vcpkg\installed\x64-mingw-static"
           g++ main.cpp button.cpp -o game.exe `
           -I"$VCPKG_PATH\include" `
           -L"$VCPKG_PATH\lib" `
-          -lraylib -lgdi32 -lwinmm -luser32 -lshell32 -static
+          -lraylib -lgdi32 -lwinmm -luser32 -lshell32 -lopengl32 -lcomdlg32 -static
 
       - name: Build Project (Linux)
         if: matrix.os == 'ubuntu-latest'
@@ -67,7 +67,6 @@ jobs:
       - name: Build Project (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          # Use the absolute path to the static library to ensure it's embedded
           LIB_PATH=$(brew --prefix raylib)/lib/libraylib.a
           INC_PATH=$(brew --prefix raylib)/include
           g++ main.cpp button.cpp -o game \
@@ -81,6 +80,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.os }}
-          # The asterisk (*) ensures it uploads 'game' on Linux/Mac and 'game.exe' on Windows
-          # without throwing "file not found" annotations.
           path: game*
