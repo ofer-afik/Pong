@@ -15,7 +15,7 @@ set(RAYLIB_INSTALL OFF CACHE BOOL "Disable raylib install target" FORCE)
 FetchContent_Declare(
   raylib
   GIT_REPOSITORY https://github.com/raysan5/raylib.git
-  GIT_TAG        v5.0.0
+  GIT_TAG        5.5
 )
 FetchContent_MakeAvailable(raylib)
 
