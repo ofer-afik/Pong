@@ -43,13 +43,17 @@ jobs:
       - name: Build executable
         run: cmake --build build --config Release --parallel
 
-      - name: Display build result on Windows
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
+      - name: Display build result
         run: |
-          Get-ChildItem -Path build\Release
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            Get-ChildItem -Path build\bin
+          else
+            ls build/bin
+          fi
+        shell: bash
 
-      - name: Display build result on Linux/macOS
-        if: matrix.os != 'windows-latest'
-        run: |
-          ls build
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pong-${{ matrix.os }}
+          path: build/bin
