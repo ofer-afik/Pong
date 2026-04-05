@@ -29,4 +29,12 @@ if(APPLE)
   find_library(IOKIT IOKit REQUIRED)
   find_library(COREVIDEO CoreVideo REQUIRED)
   target_link_libraries(Pong PRIVATE ${COCOA} ${OPENGL} ${IOKIT} ${COREVIDEO})
+
+  set_target_properties(Pong PROPERTIES
+    MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_GUI_IDENTIFIER com.example.pong
+    MACOSX_BUNDLE_BUNDLE_NAME Pong
+    MACOSX_BUNDLE_BUNDLE_VERSION "1.0"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0"
+  )
 endif()
